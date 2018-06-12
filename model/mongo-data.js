@@ -4,7 +4,7 @@ var mongo = require('mongodb'),
 var server = new Server('localhost', 27017, {
   auto_reconnect: true
 });
-var db = new Db('webSearch', server);
+var db = new Db('euro2012', server);
 var onErr = function(err, callback) {
   db.close();
   callback(err);
@@ -12,7 +12,7 @@ var onErr = function(err, callback) {
 exports.teamlist = function(gname, callback) {
   db.open(function(err, db) {
     if (!err) {
-      db.collection('booksTest', function(err, collection) {
+      db.collection('teams', function(err, collection) {
         if (!err) {
           collection.find({
             'GroupName': gname
