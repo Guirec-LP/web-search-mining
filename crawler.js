@@ -2,32 +2,62 @@ var request = require('request')
 var cheerio = require('cheerio')
 // var URL = require('url-parse')
 
-var pageToVisit = "http://www.gutenberg.org/files/11/11-h/11-h.htm";
-console.log("Visiting page " + pageToVisit);
 
-request(pageToVisit, function(error, response, body) {
-   if(error) {
-     console.log("Error: " + error);
-   }
-   // Check status code (200 is HTTP OK)
-   console.log("Status code: " + response.statusCode);
-   if(response.statusCode === 200) {
-     // Parse the document body
-     var $ = cheerio.load(body);
-     var title=  $('title').text();
-     bookParse($,function(){
-       console.log('Successful parsing of the book : '+title.trim())
-     });
-   }
-});
+var maxPages = 50;
+var start = 3
+for(var i = start ; i-start<maxPages ; i++){
+  targetPage = "http://www.gutenberg.org/files/"+i+"/"+i+"-h/"+i+"-h.htm";
+  console.log("* "+(i-start+1)+" * "+"Crawling : "+targetPage)
+  crawlSinglePage(targetPage,function(result){
+    var message = "  - Number of words for the posting : "+ result.length
+    console.log(message)
+  })
+}
+
+
+function crawlSinglePage(targetPage, callback){
+  request(targetPage, function(error, response, body) {
+     if(error) {
+       console.log("Error: " + error);
+     }
+     // Check status code (200 is HTTP OK)
+     console.log("  - HTML file downloaded");
+     if(response.statusCode === 200) {
+       // Parse the document body
+       var $ = cheerio.load(body);
+       var title=  $('title').text().trim();
+
+       if(title.startsWith("The Project Gutenberg eBook of")) {
+           title = title.split('The Project Gutenberg eBook of')[1];
+       }else if (title.startsWith('The Project Gutenberg EBook of')) {
+          title = title.split('The Project Gutenberg EBook of')[1];
+
+       }else if(title.startsWith('The Project Gutenberg\'s etext of')){
+          title = title.split('The Project Gutenberg\'s etext of')[1];
+       }
+       console.log("  - Title (short) : "+title.substring(0,35)+'...')
+       var frequency
+       bookParse($,function(result){
+         frequency = result
+         console.log('  - Successful parsing of the book')
+       });
+       callback(frequency)
+     }
+  });
+}
 
 function bookParse($,callback) {
     var body = $('html > body').text();
 
+    // here we identifu the pre div to remove it from the useful text
+    var pre= $('pre').text()
+    body = body.split(pre).join(' ')
+
+
     var filteredWords
     filtering(body,function(result){
       filteredWords = result
-      console.log('Successful filtering of the book')
+      console.log('  - Successful filtering of the book')
     })
     var totalNbWords = filteredWords.length
 
@@ -35,7 +65,7 @@ function bookParse($,callback) {
     var postings = [] ;
     createPostings(filteredWords,function(result){
       postings = result;
-      console.log('Successful creation of the postings')
+      console.log('  - Successful creation of the postings')
     })
 
     sortedPostings = sortTableByValue(postings);
@@ -44,19 +74,14 @@ function bookParse($,callback) {
     var frequencyPostings = []
     calculateFrequencies(sortedPostings,totalNbWords,function(result){
       frequencyPostings = result;
-      console.log('Successful creation of the frequency postings')
+      console.log('  - Successful creation of the frequency postings')
     })
-    console.log(frequencyPostings);
 
-    callback();
+    callback(frequencyPostings);
 }
 
 function filtering(body,callback){
     // removes the parts that belongs to Gutenberg's Project
-    var start = "*** START OF THIS PROJECT GUTENBERG EBOOK ALICE'S ADVENTURES IN WONDERLAND ***"
-    body = body.split(start)[1]
-    var end = "End of Project Gutenberg"
-    body = body.split(end)[0]
 
     // cut all the text into uniqu
     var tmp = body.replace(/(\r\n|\n|\r|\n\r)/gm," ");
@@ -98,7 +123,7 @@ function calculateFrequencies(postings, totalNbWords, callback){
         frequencies[word] = value
       }
     })
-
+    console.log(frequencies)
     callback(frequencies)
 }
 
