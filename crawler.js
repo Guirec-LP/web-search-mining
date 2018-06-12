@@ -61,8 +61,8 @@ function filtering(body,callback){
     // cut all the text into uniqu
     var tmp = body.replace(/(\r\n|\n|\r|\n\r)/gm," ");
     var tmp = tmp.replace(/^[a-z,A-Z,0-9]/gm," ");
-    var tmp = tmp.replace(/[;‘’'"_,.!:?(){}=@*$]/gm," ")
-    var tmp = tmp.replace(/[\/]/gm," ")
+    var tmp = tmp.replace(/[;‘’“'"—_—\-,.!:?(){}=@*$]/gm," ")
+    var tmp = tmp.replace(/[\/\]\[]/gm," ")
     var rawWords = tmp.split(' ')
     // handles the trimming of white spaces
     var filteredWords = []
@@ -93,8 +93,10 @@ function calculateFrequencies(postings, totalNbWords, callback){
     var frequencies = []
     postings.forEach(function(p){
       word = p[0]
-      value = Math.round(p[1]*10000/totalNbWords)/10000
-      frequencies[word] = value
+      if(word!=''){
+        value = Math.round(p[1]*100000000/totalNbWords)/100000000
+        frequencies[word] = value
+      }
     })
 
     callback(frequencies)
