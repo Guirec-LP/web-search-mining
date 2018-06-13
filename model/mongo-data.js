@@ -26,6 +26,7 @@ exports.postings = function(callback) {
                 });
 
               // strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
+              db.close()
               callback("", savedBooks);
 
             } else {

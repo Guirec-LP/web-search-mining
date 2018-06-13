@@ -9,9 +9,10 @@ exports.get = function(req, res) {
       });
       var title = "Test web page on node.js"
       var pageTitle = "Web Search and Mining - Implementation"
-      var content = "<p>The postings are saved as : </p>"
+      var contentHeader = 'Results'
+      var content = ""
       savedBooks.forEach(function(title){
-        content += '<div class="alert alert-light alert-sm">'+title
+        content +=    '<div class="alert alert-light alert-sm">'+title
                     + '&nbsp;&nbsp;'
                       +'<button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">'
 
@@ -25,7 +26,7 @@ exports.get = function(req, res) {
                     +'</div>'
                 +'</div>'
       })
-      res.write(template.build(title,pageTitle,content));
+      res.write(template.build(title,pageTitle,contentHeader,content));
       res.end();
     } else {
       res.writeHead(200, {

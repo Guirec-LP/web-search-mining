@@ -1,4 +1,4 @@
-exports.build = function(title, pagetitle, content) {
+exports.build = function(title, pagetitle, contentHeader, content) {
   return ['<!doctype html>',
   '<html lang="en"><meta charset="utf-8"><title>{title}</title>',
   '<link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.css" />',
@@ -11,11 +11,28 @@ exports.build = function(title, pagetitle, content) {
     '<div class="col-10"id="content">',
       '<br><br>',
       '<h1 class="text-primary">{pagetitle}</h1>',
-      '<br><br>',
+      '<div class="alert alert-successful">Welcome to the <b>demo interface</b> of our project !</div>',
+
+      // form part for the queries
+      '<div class="card">',
+        '<div class="card-body card-primary">',
+        '<form>',
+          '<div class="form-group row">',
+                '<label class="col-sm-2 col-form-label" for="myText">Query</label>',
+                '<input type = "text" class="form-control col-sm-5" id = "myText" placeholder = "Please enter the terms of your research here" />',
+                // '<small id="help" class="form-text text-muted"></small>',
+                '<div class="col-sm-1"></div>',
+                '<button type = "submit" class="btn btn-danger col-sm-2">Search</button>',
+          '</div>',
+        '</form>',
+        '</div>',
+      '</div>',
+
+      // part for the display of the results
       '<div class="card">',
         '<div class="card-body card-primary">',
         '<div class="card-title">',
-          'Welcome to the <b>demo interface</b> of our project !',
+          '{contentHeader}',
         '</div>',
           '{content}',
         '</div>',
@@ -29,5 +46,6 @@ exports.build = function(title, pagetitle, content) {
   .join('\n')
   .replace(/{title}/g, title)
   .replace(/{pagetitle}/g, pagetitle)
+  .replace(/{contentHeader}/g, contentHeader)
   .replace(/{content}/g, content);
 };
