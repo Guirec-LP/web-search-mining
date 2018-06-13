@@ -11,7 +11,19 @@ exports.get = function(req, res) {
       var pageTitle = "Web Search and Mining - Implementation"
       var content = "<p>The postings are saved as : </p>"
       savedBooks.forEach(function(title){
-        content += '<p>'+title+'</p>'
+        content += '<div class="alert alert-light alert-sm">'+title
+                    + '&nbsp;&nbsp;'
+                      +'<button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">'
+
+                        +'More details'
+                      +'</button>'
+
+                    +'<div class="collapse alert alert-secondary" id="collapseExample">'
+                      +'<div class="card card-body">'
+                        +'Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson'
+                      +'</div>'
+                    +'</div>'
+                +'</div>'
       })
       res.write(template.build(title,pageTitle,content));
       res.end();
