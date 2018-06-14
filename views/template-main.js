@@ -7,8 +7,7 @@ exports.build = function(title, pagetitle, contentHeader, content) {
   '<div class="container">',
 
   '<div class="row">',
-    '<div class="col-1"></div>',
-    '<div class="col-10"id="content">',
+    '<div class="col-12"id="content">',
       '<br><br>',
       '<h1 class="text-primary">{pagetitle}</h1>',
       '<div class="alert alert-successful">Welcome to the <b>demo interface</b> of our project !</div>',
@@ -16,7 +15,7 @@ exports.build = function(title, pagetitle, contentHeader, content) {
       // form part for the queries
       '<div class="card">',
         '<div class="card-body card-primary">',
-        '<form>',
+        '<form method="get" action="/">',
           '<div class="form-group row">',
                 '<label class="col-sm-2 col-form-label" for="myText">Query</label>',
                 '<input type = "text" class="form-control col-sm-5" id = "myText" placeholder = "Please enter the terms of your research here" />',
@@ -38,7 +37,6 @@ exports.build = function(title, pagetitle, contentHeader, content) {
         '</div>',
       '</div>',
     '</div>',
-    '<div class="col-1"></div>',
   '</div>',
 
 '</div>',
