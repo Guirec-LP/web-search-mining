@@ -29,7 +29,7 @@ db.open(function (err, db) {
 })
 
 
-var maxPages = 6;
+var maxPages = 16;
 var start = 3
 var rootURL = "http://www.gutenberg.org/files/"
 console.log("Crawling " + maxPages + " pages from gutenberg.org")
@@ -61,11 +61,12 @@ async.forEach(targetPages, function (url, callback) {
   if (err) {
     console.log("erreur à la fin du async.forEach")
   } else {
-    console.log("     *  *  *  *  * ")
+    console.log("     *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  * ")
     console.log("")
     console.log("- - -   End of Crawling and Preliminary Postings  - - -")
     console.log("")
     console.log("- - -     Please execute indexing.js file now     - - -")
+    db.close()
 
   }
 })
