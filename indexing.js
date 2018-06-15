@@ -7,32 +7,35 @@ var server = new Server('localhost', 27017, {
   auto_reconnect: true
 });
 var db = new Db('webSearch', server);
-var onErr = function(err, callback) {
+var onErr = function(err,callback) {
   console.log('ICI')
   db.close();
   callback(err);
 };
 var collectionPostings
 var collectionBooks
+var collectionBigPosting
 
 // Connection once to the database
 
-// to test the sortTableByFrequency function
-// console.log(sortTableByFrequency([4.001,3.002,1.004,2.003]))
+
 
 var allPostings = [];
 var booksIndex  = [];
+var finalPostings = []
 
 
 async.series([
     retrievePostings,
-    getIndexBook,
+    loadBooksURL,
     treatMultiplePostings,
+    saveBigPostings
 ], function (error, result) {
     if (error) { alert('Something is wrong !');
   }else{
-    console.log(allBooks)
-    // console.log(allPostings)
+    console.log('DONE')
+    // console.log(finalPostings)
+    db.close()
   }
 });
 
@@ -56,7 +59,6 @@ function retrievePostings(callback){
               allPostings.push(element)
             });
           // strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
-          db.close()
           callback(null);
         } else {
           onErr(err, callback(null));
@@ -68,44 +70,43 @@ function retrievePostings(callback){
   })
 }
 
-function getIndexBook(callback){
+function loadBooksURL(callback){
 
-  var allBooks ;
-  db.open(function(err, db) {
-    if (!err) {
       collectionBooks = db.collection('books',function(err,collection){
         if(err){
+
           onErr(err, callback(null));
         }
       })
-      collectionBooks.find().toArray(function(err, data) {
-          if(!err){
-            console.log(err);
 
-            data.forEach(function(element){
-              allBooks.push(element)
-            });
-          // strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
-          db.close()
-          callback(null);
-        } else {
-          onErr(err, callback(null));
-        }
-      });
-    }else{
-        onErr(err,callback(null))
-    }
-  })
+      // saving all new books
+      allPostings.forEach(function(book){
+        title = book['title']
+        url = book['url']
+        var document = {"title":title,"url":url};
+        // console.log(document)
+
+        collectionBooks.save(document, {w: 1}, function(err, records){
+            if(err){
+              console.log(err);
+              console.log('error when saving book')
+            }else{
+              // book saved
+
+            }
+        });
+      })
+      callback(null)
 }
 
 function treatMultiplePostings(callback){
-  var finalPostings = []
 
   allPostings.forEach(function(book){
-    title = book[0]
-    url = book[1]
-    postings = book[2]
-    index = getIndexBookOf(title,url);
+
+    title = book['title']
+
+    postings = book['postings']
+
     // console.log(index)
     for(key in postings){
       word = postings[key][0]
@@ -113,16 +114,16 @@ function treatMultiplePostings(callback){
 
       if(finalPostings[word]==undefined){
         var myArray = []
-        myArray.push(index+freq)
-        finalPostings[word]= myArray;
+        myArray.push({'freq':freq,'title':title})
+        finalPostings[word] = myArray;
       }else{
         // console.log(finalPostings[word])
         var myArray = []
         for(key in finalPostings[word]){
           myArray.push(finalPostings[word][key])
         }
-        myArray.push(index+freq)
-        finalPostings[word]= sortTableByFrequency(myArray)
+        myArray.push({'freq':freq,'title':title})
+        finalPostings[word] = sortTableByFrequency(myArray)
       }
     }
 
@@ -132,12 +133,26 @@ function treatMultiplePostings(callback){
 
 }
 
-function getIndexBookOf(title,url){
-  // console.log(booksIndex)
-  index = booksIndex.indexOf(title+'/'+url)
-  return index
+function saveBigPostings(callback){
+
+        // saving the Big posting list
+        for (key in finalPostings){
+          posting = finalPostings[key]
+          var document = {"word":key,"posting":posting};
+          // console.log(collectionBigPosting)
+          db.collection('bigPosting').save(document, {w: 1}, function(err, records){
+              if(err){
+                console.log(err);
+                console.log('error when saving Big Posting word')
+              }else{
+                // book saved
+              }
+          });
+        }
+        callback(null)
 }
 
+/* NOT USED */
 function sortTableByAlphabet(table){
 
   var sortable = [];
@@ -157,8 +172,8 @@ function sortTableByFrequency(tableArg){
     return table;
   }else{
     for (var i = 0 ; i < length-1; i++) {
-      var frequency1 = table[i] - Math.trunc(table[i])
-      var frequency2 = table[i+1] - Math.trunc(table[i+1])
+      var frequency1 = table[i]['freq']
+      var frequency2 = table[i+1]['freq']
       if(frequency1 < frequency2){
         // console.log('f1 : '+frequency1+' < f2 :'+ frequency2)
         var tmp = table[i+1]
