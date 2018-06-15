@@ -1,84 +1,219 @@
 var request = require('request')
 var cheerio = require('cheerio')
-// var URL = require('url-parse')
+var mongo = require('mongodb')
+async = require('async')
+
+Server = mongo.Server
+Db = mongo.Db
+var server = new Server('localhost', 27017, {
+  auto_reconnect: true
+});
+var db = new Db('webSearch', server);
+var onErr = function(err, callback) {
+  db.close();
+  callback(err);
+};
+var collection
+
+// Connection once to the database
+db.open(function(err, db) {
+  if (!err) {
+    collection = db.collection('postings',function(err,collection){
+      if(err){
+        onErr(err, callback);
+      }
+    })
+  }else{
+      onErr(err,callback)
+  }
+})
 
 
-var maxPages = 50;
-var start = 3
-for(var i = start ; i-start<maxPages ; i++){
-  targetPage = "http://www.gutenberg.org/files/"+i+"/"+i+"-h/"+i+"-h.htm";
-  console.log("* "+(i-start+1)+" * "+"Crawling : "+targetPage)
-  crawlSinglePage(targetPage,function(result){
-    var message = "  - Number of words for the posting : "+ result.length
-    console.log(message)
+
+  var allPostings = [];
+  var booksIndex = []
+
+  var maxPages = 6;
+  var start = 3
+  var rootURL = "http://www.gutenberg.org/files/"
+  console.log("Crawling "+maxPages+" pages from gutenberg.org")
+
+  var targetPages = []
+  for(var i = 0 ; i<maxPages ; i++){
+    var index = i + start
+    targetPages.push(rootURL+index+"/"+index+"-h/"+index+"-h.htm");
+  }
+
+  async.forEach(targetPages,function(url,callback){
+    var title
+    async.waterfall([
+        function(callback) {
+          callback(null, url);
+        },
+        crawlSinglePage,
+        filtering,
+        createPostings,
+        calculateFrequencies,
+    ], function (error, result) {
+        if (error) { alert('Something is wrong !');
+      }else{
+        crawlingSuccess(result,url,callback);
+      }
+    });
+  },function(err){
+    if(err){
+      console.log("erreur à la fin du async.forEach")
+    }else{
+      console.log("     * * * * * ")
+      console.log("")
+      console.log("- - - End of Crawling and Preliminary Postings - - -")
+      console.log("")
+      console.log("     * * * * * ")
+
+
+      treatMultiplePostings(allPostings)
+
+
+    }
   })
-}
 
 
-function crawlSinglePage(targetPage, callback){
-  request(targetPage, function(error, response, body) {
+
+  function treatMultiplePostings(allPostings){
+    var finalPostings = []
+    // console.log(booksIndex)
+    // console.log(allPostings)
+
+
+    allPostings.forEach(function(book){
+      title = book[0]
+      url = book[1]
+      postings = book[2]
+      index = getIndexBookOf(title,url);
+      console.log(index)
+      for(key in postings){
+        word = postings[key][0]
+        freq = postings[key][1]
+
+        if(finalPostings[word]==undefined){
+          var myArray = []
+          myArray.push(index+freq)
+          finalPostings[word]= myArray;
+        }else{
+          // console.log(finalPostings[word])
+          var myArray = []
+          for(key in finalPostings[word]){
+            myArray.push(finalPostings[word][key])
+          }
+          myArray.push(index+freq)
+          finalPostings[word]= myArray
+        }
+      }
+
+      console.log(sortTableByAlphabet(finalPostings))
+    })
+
+  }
+
+  function getIndexBookOf(title,url){
+    console.log(booksIndex)
+    index = booksIndex.indexOf(title+'/'+url)
+    return index
+  }
+
+
+
+
+
+  function crawlingSuccess(frequencyPostings,url,callback){
+
+    console.log(title.substring(0,35)+" - ("+ Object.keys(frequencyPostings).length+" different words)")
+    // console.log('    @ '+url)
+    // do something with the frequency postings
+    var document = {"url":url, "title":title, "postings":frequencyPostings};
+    // console.log(document)
+    booksIndex.push(title+'/'+url);
+    allPostings.push([title,url,frequencyPostings]);
+
+    callback();
+
+    /*
+    collection.save(document, {w: 1}, function(err, records){
+        if(err){
+          console.log(err);
+          console.log('error when saving')
+        }else{
+          console.log('saved')
+
+        }
+    });
+    */
+
+  }
+
+  /*
+  collection.find().toArray(function(err, data){
+      if(err){
+        console.log(err);
+        console.log('error when loading titles')
+      }else{
+        console.log('Loading titles')
+        data.forEach(function(element){
+          console.log(element['title'])
+        });
+      }
+  });
+  */
+
+function crawlSinglePage(url, callback){
+  request(url, function(error, response, body) {
      if(error) {
        console.log("Error: " + error);
-     }
-     // Check status code (200 is HTTP OK)
-     console.log("  - HTML file downloaded");
-     if(response.statusCode === 200) {
-       // Parse the document body
-       var $ = cheerio.load(body);
-       var title=  $('title').text().trim();
+     }else{
+       // Check status code (200 is HTTP OK)
+       // console.log("  - HTML file downloaded");
+       if(response.statusCode === 200) {
+         // Parse the document body
+         var $ = cheerio.load(body);
+         title =  $('h1').text().trim();
+         if(title.length<=0){
+           title = $('h2').text().trim();
+         }
+         if(title.length<=0){
+           title = $('title').text().trim();
+         }
+         if(title.startsWith("The Project Gutenberg eBook of")) {
+             title = title.split('The Project Gutenberg eBook of')[1];
+         }else if (title.startsWith('The Project Gutenberg EBook of')) {
+            title = title.split('The Project Gutenberg EBook of')[1];
+         }else if(title.startsWith('The Project Gutenberg\'s etext of')){
+            title = title.split('The Project Gutenberg\'s etext of')[1];
+         }else if(title.startsWith('The Project Gutenberg\'s Etext of')){
+            title = title.split('The Project Gutenberg\'s Etext of')[1];
+         }else if(title.startsWith('The Project Gutenberg\'s E-text of')){
+            title = title.split('The Project Gutenberg\'s E-text of')[1];
+         }else if(title.startsWith('The Project Gutenberg\'s E-Book of')){
+            title = title.split('The Project Gutenberg\'s E-Book of')[1];
+         }else if(title.startsWith('The Project Gutenberg\'s E-book of')){
+            title = title.split('The Project Gutenberg\'s E-book of')[1];
+         }
 
-       if(title.startsWith("The Project Gutenberg eBook of")) {
-           title = title.split('The Project Gutenberg eBook of')[1];
-       }else if (title.startsWith('The Project Gutenberg EBook of')) {
-          title = title.split('The Project Gutenberg EBook of')[1];
+         title = title.replace(/(\r\n|\n|\r|\n\r)/gm," ");
+         title = title.replace(/[%#;‘’“”'''"—_—\-,.!:?(){}=@*$]/gm," ")
+         // console.log(" *  "+title.substring(0,65)+' [...]')
+         var body = $('html > body').text();
 
-       }else if(title.startsWith('The Project Gutenberg\'s etext of')){
-          title = title.split('The Project Gutenberg\'s etext of')[1];
+         // here we identifu the pre div to remove it from the useful text
+         var pre= $('pre').text()
+         body = body.split(pre).join(' ')
+         // Here we define the correct order to avoid a callbeck hell situation
+         callback(null,body)
        }
-       console.log("  - Title (short) : "+title.substring(0,35)+'...')
-       var frequency
-       bookParse($,function(result){
-         frequency = result
-         console.log('  - Successful parsing of the book')
-       });
-       callback(frequency)
      }
   });
 }
 
-function bookParse($,callback) {
-    var body = $('html > body').text();
 
-    // here we identifu the pre div to remove it from the useful text
-    var pre= $('pre').text()
-    body = body.split(pre).join(' ')
-
-
-    var filteredWords
-    filtering(body,function(result){
-      filteredWords = result
-      console.log('  - Successful filtering of the book')
-    })
-    var totalNbWords = filteredWords.length
-
-    // Creation of the postings
-    var postings = [] ;
-    createPostings(filteredWords,function(result){
-      postings = result;
-      console.log('  - Successful creation of the postings')
-    })
-
-    sortedPostings = sortTableByValue(postings);
-    // displaySimpleTable(filteredWords)
-    // displayAssociativeTable(sortedPostings)
-    var frequencyPostings = []
-    calculateFrequencies(sortedPostings,totalNbWords,function(result){
-      frequencyPostings = result;
-      console.log('  - Successful creation of the frequency postings')
-    })
-
-    callback(frequencyPostings);
-}
 
 function filtering(body,callback){
     // removes the parts that belongs to Gutenberg's Project
@@ -86,7 +221,7 @@ function filtering(body,callback){
     // cut all the text into uniqu
     var tmp = body.replace(/(\r\n|\n|\r|\n\r)/gm," ");
     var tmp = tmp.replace(/^[a-z,A-Z,0-9]/gm," ");
-    var tmp = tmp.replace(/[;‘’“'"—_—\-,.!:?(){}=@*$]/gm," ")
+    var tmp = tmp.replace(/[%#;‘’“”'''"—_—\-,.!:?(){}=@*$]/gm," ")
     var tmp = tmp.replace(/[\/\]\[]/gm," ")
     var rawWords = tmp.split(' ')
     // handles the trimming of white spaces
@@ -97,50 +232,70 @@ function filtering(body,callback){
            && !w.endsWith(' ')){
             filteredWords.push(w);
         }
+        // console.log(filteredWords)
     })
-    callback(filteredWords);
+    var total = filteredWords.length
+    callback(null,filteredWords,total);
 }
 
-function createPostings(filteredWords,callback){
+
+function createPostings(filteredWords,total,callback){
   var postings = []
-  filteredWords.forEach(function(w){
-      if(postings[w]==undefined){
-        postings[w]=1
-      }else{
-        postings[w]= postings[w]+1;
-      }
-  })
 
-  callback(postings)
+  filteredWords.forEach(function(w){
+
+      if(postings[w]==undefined){
+        postings[w]= 1;
+      }else{
+        postings[w]= parseInt(postings[w])+1;
+      }
+
+  })
+  // console.log('  - Successful creation of the postings '+Object.keys(postings).length)
+  callback(null,sortTableByValue(postings),total)
 }
+
 
 function calculateFrequencies(postings, totalNbWords, callback){
     var frequencies = []
-    postings.forEach(function(p){
-      word = p[0]
+    for(index in postings){
+      //console.log("word =<"+word+"> value =<"+value+">");
+
+      var value = postings[index][1]
+      var word = postings[index][0]
+
       if(word!=''){
-        value = Math.round(p[1]*100000000/totalNbWords)/100000000
-        frequencies[word] = value
+        var freq = value/totalNbWords
+        frequencies.push([word,freq]);
       }
-    })
-    console.log(frequencies)
-    callback(frequencies)
+    }
+    // console.log('  - Successful creation of the frequency postings '+Object.keys(frequencies).length)
+    callback(null,cleanTable(frequencies))
 }
+
 
 function displayAssociativeTable(table){
+  var limit = 5
+  var count = 0
   for(key in table){
-    console.log(key+' | '+table[key]+'\n');
+    count ++
+    if(count<= limit){
+      console.log(key+' | '+table[key]+'\n');
+    }
   }
 }
 
-// temporary function to display all words parsed after the split and regex
-function displaySimpleTable(table){
-  var monString = "";
-  for(element in table){
-    monString += table[element]+' | '
+function cleanTable(actual) {
+  var newTable = [];
+  for (key in actual) {
+    if (actual[key]!=null) {
+    //  console.log(actual[key])
+      newTable[key] = actual[key];
+    }
   }
-  console.log(monString)
+  return newTable;
 }
+
 
 // sorts the table returning the highest value firsts in descending order
 // example ['key1' -> 2 , 'key2' -> 15 , 'key3' -> 8]
@@ -155,6 +310,16 @@ function sortTableByValue(table){
   sortable.sort(function(a, b) {
       return b[1] - a[1];
   });
+  return sortable
+}
 
+function sortTableByAlphabet(table){
+
+  var sortable = [];
+  for (var key in table) {
+      sortable.push([key, table[key]]);
+  }
+
+  sortable.sort();
   return sortable
 }

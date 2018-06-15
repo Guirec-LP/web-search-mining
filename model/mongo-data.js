@@ -4,34 +4,31 @@ var mongo = require('mongodb'),
 var server = new Server('localhost', 27017, {
   auto_reconnect: true
 });
-var db = new Db('euro2012', server);
+var db = new Db('webSearch', server);
 var onErr = function(err, callback) {
   db.close();
   callback(err);
 };
-exports.teamlist = function(gname, callback) {
+
+exports.postings = function(callback) {
   db.open(function(err, db) {
     if (!err) {
-      db.collection('teams', function(err, collection) {
+      db.collection('postings', function(err, collection) {
         if (!err) {
-          collection.find({
-            'GroupName': gname
-          }).toArray(function(err, docs) {
-            if (!err) {
-              db.close();
-              var intCount = docs.length;
-              if (intCount > 0) {
-                var strJson = "";
-                for (var i = 0; i < intCount;) {
-                  strJson += '{"country":"' + docs[i].country + '"}'
-                  i = i + 1;
-                  if (i < intCount) {
-                    strJson += ',';
-                  }
-                }
-                strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
-                callback("", JSON.parse(strJson));
-              }
+
+          collection.find().toArray(function(err, data) {
+              if(!err){
+                console.log(err);
+
+                var savedBooks = []
+                data.forEach(function(element){
+                  savedBooks.push(element['title'])
+                });
+
+              // strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
+              db.close()
+              callback("", savedBooks);
+
             } else {
               onErr(err, callback);
             }

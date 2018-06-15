@@ -1,19 +1,32 @@
 var template = require('../views/template-main');
-var mongo_data = require('../model/mongo-data');  
+var mongo_data = require('../model/mongo-data');
 exports.get = function(req, res) {
-  mongo_data.teamlist("D", function(err, teamlist) {
+  mongo_data.postings(function(err, savedBooks) {
     if (!err) {
-      var strTeam = "",
-        i = 0;
-      for (i = 0; i < teamlist.count;) {
-        strTeam = strTeam + "<li>" + teamlist.teams[i].country + "</li>";
-        i = i + 1;
-      }
-      strTeam = "<ul>" + strTeam + "</ul>";
+
       res.writeHead(200, {
         'Content-Type': 'text/html'
       });
-      res.write(template.build("Test web page on node.js", "Hello there", "<p>The teams in Group " + teamlist.GroupName + " for Euro 2012 are:</p>" + strTeam));
+      var title = "Test web page on node.js"
+      var pageTitle = "Web Search and Mining - Implementation"
+      var contentHeader = 'Results'
+      var content = ""
+      savedBooks.forEach(function(title){
+        content +=    '<div class="alert alert-light alert-sm">'+title
+                    + '&nbsp;&nbsp;'
+                      +'<button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">'
+
+                        +'More details'
+                      +'</button>'
+
+                    +'<div class="collapse alert alert-secondary" id="collapseExample">'
+                      +'<div class="card card-body">'
+                        +'Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson'
+                      +'</div>'
+                    +'</div>'
+                +'</div>'
+      })
+      res.write(template.build(title,pageTitle,contentHeader,content));
       res.end();
     } else {
       res.writeHead(200, {
