@@ -18,7 +18,7 @@ var collection
 // Connection once to the database
 db.open(function(err, db) {
   if (!err) {
-    collection = db.collection('postings',function(err,collection){
+    collectionPostings = db.collection('postings',function(err,collectionPostings){
       if(err){
         onErr(err, callback);
       }
@@ -28,10 +28,6 @@ db.open(function(err, db) {
   }
 })
 
-
-
-  var allPostings = [];
-  var booksIndex = []
 
   var maxPages = 6;
   var start = 3
@@ -64,65 +60,14 @@ db.open(function(err, db) {
     if(err){
       console.log("erreur à la fin du async.forEach")
     }else{
-      console.log("     * * * * * ")
+      console.log("     *  *  *  *  * ")
       console.log("")
-      console.log("- - - End of Crawling and Preliminary Postings - - -")
+      console.log("- - -   End of Crawling and Preliminary Postings  - - -")
       console.log("")
-      console.log("     * * * * * ")
-
-
-      treatMultiplePostings(allPostings)
-
+      console.log("- - -     Please execute indexing.js file now     - - -")
 
     }
   })
-
-
-
-  function treatMultiplePostings(allPostings){
-    var finalPostings = []
-    // console.log(booksIndex)
-    // console.log(allPostings)
-
-
-    allPostings.forEach(function(book){
-      title = book[0]
-      url = book[1]
-      postings = book[2]
-      index = getIndexBookOf(title,url);
-      console.log(index)
-      for(key in postings){
-        word = postings[key][0]
-        freq = postings[key][1]
-
-        if(finalPostings[word]==undefined){
-          var myArray = []
-          myArray.push(index+freq)
-          finalPostings[word]= myArray;
-        }else{
-          // console.log(finalPostings[word])
-          var myArray = []
-          for(key in finalPostings[word]){
-            myArray.push(finalPostings[word][key])
-          }
-          myArray.push(index+freq)
-          finalPostings[word]= myArray
-        }
-      }
-
-      console.log(sortTableByAlphabet(finalPostings))
-    })
-
-  }
-
-  function getIndexBookOf(title,url){
-    console.log(booksIndex)
-    index = booksIndex.indexOf(title+'/'+url)
-    return index
-  }
-
-
-
 
 
   function crawlingSuccess(frequencyPostings,url,callback){
@@ -132,22 +77,22 @@ db.open(function(err, db) {
     // do something with the frequency postings
     var document = {"url":url, "title":title, "postings":frequencyPostings};
     // console.log(document)
-    booksIndex.push(title+'/'+url);
-    allPostings.push([title,url,frequencyPostings]);
-
-    callback();
 
     /*
-    collection.save(document, {w: 1}, function(err, records){
+    booksIndex.push(title+'/'+url);
+    allPostings.push([title,url,frequencyPostings]);
+    */
+
+    collectionPostings.save(document, {w: 1}, function(err, records){
         if(err){
           console.log(err);
           console.log('error when saving')
         }else{
           console.log('saved')
-
+          callback();
         }
     });
-    */
+
 
   }
 
@@ -310,16 +255,5 @@ function sortTableByValue(table){
   sortable.sort(function(a, b) {
       return b[1] - a[1];
   });
-  return sortable
-}
-
-function sortTableByAlphabet(table){
-
-  var sortable = [];
-  for (var key in table) {
-      sortable.push([key, table[key]]);
-  }
-
-  sortable.sort();
   return sortable
 }
