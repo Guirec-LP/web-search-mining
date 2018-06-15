@@ -60,7 +60,6 @@ function getBooks(callback){
       data.forEach(function(element){
         booksIndex.push(element)
       });
-      console.log('ICICICICICI')
       callback();
     } else {
       console.log(err)

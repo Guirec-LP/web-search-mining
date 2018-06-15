@@ -8,9 +8,9 @@ var server = new Server('localhost', 27017, {
 });
 var db = new Db('webSearch', server);
 var onErr = function(err,callback) {
-  console.log('ICI')
   db.close();
-  callback(err);
+  console.log(err);
+  callback(err)
 };
 var collectionPostings
 var collectionBooks
@@ -20,12 +20,8 @@ var collectionBigPosting
 
 
 
-var allPostings = [];
-var booksIndex  = [];
-var finalPostings = []
 
-
-async.series([
+async.waterfall([
     retrievePostings,
     loadBooksURL,
     treatMultiplePostings,
@@ -43,7 +39,7 @@ async.series([
 // retrievePostings(function(){console.log("ok")})
 
 function retrievePostings(callback){
-
+  var allPostings = []
   db.open(function(err, db) {
     if (!err) {
       collectionPostings = db.collection('postings',function(err,collection){
@@ -59,7 +55,7 @@ function retrievePostings(callback){
               allPostings.push(element)
             });
           // strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
-          callback(null);
+          callback(null,allPostings);
         } else {
           onErr(err, callback(null));
         }
@@ -70,8 +66,8 @@ function retrievePostings(callback){
   })
 }
 
-function loadBooksURL(callback){
-
+function loadBooksURL(data,callback){
+    var booksIndex = []
       collectionBooks = db.collection('books',function(err,collection){
         if(err){
 
@@ -80,32 +76,42 @@ function loadBooksURL(callback){
       })
 
       // saving all new books
-      allPostings.forEach(function(book){
-        title = book['title']
-        url = book['url']
+      async.forEach(data, function(book,callback){
+        var title = book['title']
+        var url = book['url']
         var document = {"title":title,"url":url};
         // console.log(document)
 
         collectionBooks.save(document, {w: 1}, function(err, records){
-            if(err){
-              console.log(err);
-              console.log('error when saving book')
-            }else{
-              // book saved
+          if(err){
+            console.log(err);
+            console.log('error when saving book')
+          }else{
+            var id = records.ops[0]['_id']
 
-            }
-        });
+            booksIndex[title]=id
+            callback(null)
+          }
+        })
+
+      },function (err) {
+          if (err) {
+            console.log("erreur à la fin du async.forEach")
+          } else {
+            callback(null,booksIndex,data)
+        }
       })
-      callback(null)
 }
 
-function treatMultiplePostings(callback){
+function treatMultiplePostings(idsBooks,myPostings,callback){
 
-  allPostings.forEach(function(book){
+  var finalPostings = []
+  myPostings.forEach(function(book){
 
-    title = book['title']
-
-    postings = book['postings']
+    var title = book['title']
+    var index = idsBooks[title]
+    console.log(index)
+    var postings = book['postings']
 
     // console.log(index)
     for(key in postings){
@@ -114,7 +120,7 @@ function treatMultiplePostings(callback){
 
       if(finalPostings[word]==undefined){
         var myArray = []
-        myArray.push({'freq':freq,'title':title})
+        myArray.push({'freq':freq,'index':index})
         finalPostings[word] = myArray;
       }else{
         // console.log(finalPostings[word])
@@ -122,22 +128,23 @@ function treatMultiplePostings(callback){
         for(key in finalPostings[word]){
           myArray.push(finalPostings[word][key])
         }
-        myArray.push({'freq':freq,'title':title})
+        myArray.push({'freq':freq,'index':index})
         finalPostings[word] = sortTableByFrequency(myArray)
       }
+      // console.log(finalPostings)
     }
 
     // console.log(sortTableByAlphabet(finalPostings))
   })
-  callback(null)
+  callback(null,finalPostings)
 
 }
 
-function saveBigPostings(callback){
+function saveBigPostings(postingsReady,callback){
 
         // saving the Big posting list
-        for (key in finalPostings){
-          posting = finalPostings[key]
+        for (key in postingsReady){
+          posting = postingsReady[key]
           var document = {"word":key,"posting":posting};
           // console.log(collectionBigPosting)
           db.collection('bigPosting').save(document, {w: 1}, function(err, records){
