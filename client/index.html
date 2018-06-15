@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Test web page on node.js</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="./style/main.css" />
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="row">
+            <div class="col-12" id="content">
+                <br>
+                <br>
+                <h1 class="text-primary">Web Search and Mining - Implementation</h1>
+                <div class="alert alert-successful">Welcome to the
+                    <b>demo interface</b> of our project !</div>
+                <div class="card">
+                    <div class="card-body card-primary">
+                        <!-- <form method="get" action="/"> -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label" for="myText">Query</label>
+                            <input type="text" class="form-control col-sm-5" id="idSearchInput" placeholder="Please enter the terms of your research here"
+                            />
+                            <small id="help" class="form-text text-muted"></small>
+                            <div class="col-sm-1"></div>
+                            <button type="submit" class="btn btn-danger col-sm-2" onclick="onSearchClick()">Search</button>
+                        </div>
+                        <!-- </form> -->
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body card-primary">
+                        <div class="card-title"> Results
+                        </div>
+                        <div id="idContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="./controller/home.controller.js"></script>
+
+</body>
+
+</html>
