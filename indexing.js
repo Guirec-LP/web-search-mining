@@ -8,6 +8,7 @@ var server = new Server('localhost', 27017, {
 });
 var db = new Db('webSearch', server);
 var onErr = function(err, callback) {
+  console.log('ICI')
   db.close();
   callback(err);
 };
@@ -30,8 +31,8 @@ async.series([
 ], function (error, result) {
     if (error) { alert('Something is wrong !');
   }else{
-    console.log('YESSS')
-    console.log(allPostings)
+    console.log(allBooks)
+    // console.log(allPostings)
   }
 });
 
@@ -40,7 +41,6 @@ async.series([
 
 function retrievePostings(callback){
 
-  var result = []
   db.open(function(err, db) {
     if (!err) {
       collectionPostings = db.collection('postings',function(err,collection){
@@ -53,11 +53,10 @@ function retrievePostings(callback){
             console.log(err);
 
             data.forEach(function(element){
-              result.push(element)
+              allPostings.push(element)
             });
           // strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
           db.close()
-          allPostings = result
           callback(null);
         } else {
           onErr(err, callback(null));
