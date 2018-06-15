@@ -41,7 +41,7 @@ db.open(function(err, db) {
   }
 
   async.forEach(targetPages,function(url,callback){
-    var title
+    var title;
     async.waterfall([
         function(callback) {
           callback(null, url);
