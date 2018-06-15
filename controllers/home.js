@@ -7,7 +7,7 @@ exports.get = function(req, res) {
       res.writeHead(200, {
         'Content-Type': 'text/html'
       });
-      var title = "Test web page on node.js"
+      var title = "WSM Project"
       var pageTitle = "Web Search and Mining - Implementation"
       var contentHeader = 'Results'
       var content = ""
