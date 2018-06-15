@@ -41,12 +41,25 @@ function processPOST(url, request, response) {
 
         switch (url) {
             case '/query':
-                var result;
+                var result = {};
+                var query = requestParams.query;
 
                 mongo_data.postings(function (err, savedBooks) {
                     console.log("savedBooks: ", savedBooks);
                     if (!err) {
-                        result = { savedBooks: savedBooks };
+                        if (query == '') {
+                            result = { savedBooks: savedBooks };
+                        } else {
+                            result.savedBooks = [];
+                            var words = query.toLowerCase().split(' ');
+                            words.forEach(word => {
+                                savedBooks.forEach(book => {
+                                    if(book.toLowerCase().includes(word) && !result.savedBooks.includes(book)) {
+                                        result.savedBooks.push(book);
+                                    }
+                                });
+                            });
+                        }
                     } else {
                         result = { savedBooks: [] };
                     }
