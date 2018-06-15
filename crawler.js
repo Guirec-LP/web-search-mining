@@ -33,7 +33,7 @@ db.open(function(err, db) {
   var allPostings = [];
   var booksIndex = []
 
-  var maxPages = 2;
+  var maxPages = 6;
   var start = 3
   var rootURL = "http://www.gutenberg.org/files/"
   console.log("Crawling "+maxPages+" pages from gutenberg.org")
@@ -71,7 +71,7 @@ db.open(function(err, db) {
       console.log("     * * * * * ")
 
 
-      // treatMultiplePostings(allPostings)
+      treatMultiplePostings(allPostings)
 
 
     }
@@ -96,17 +96,21 @@ db.open(function(err, db) {
         freq = postings[key][1]
 
         if(finalPostings[word]==undefined){
-          var myArray = [index+freq]
-          finalPostings.push([word,myArray]);
+          var myArray = []
+          myArray.push(index+freq)
+          finalPostings[word]= myArray;
         }else{
           // console.log(finalPostings[word])
           var myArray = []
-          myArray.push(finalPostings[word])
-          myArray.push(title+freq)
+          for(key in finalPostings[word]){
+            myArray.push(finalPostings[word][key])
+          }
+          myArray.push(index+freq)
           finalPostings[word]= myArray
         }
       }
-      console.log(finalPostings)
+
+      console.log(sortTableByAlphabet(finalPostings))
     })
 
   }
@@ -131,6 +135,8 @@ db.open(function(err, db) {
     booksIndex.push(title+'/'+url);
     allPostings.push([title,url,frequencyPostings]);
 
+    callback();
+
     /*
     collection.save(document, {w: 1}, function(err, records){
         if(err){
@@ -138,10 +144,11 @@ db.open(function(err, db) {
           console.log('error when saving')
         }else{
           console.log('saved')
-          callback();
+
         }
     });
     */
+
   }
 
   /*
@@ -303,5 +310,16 @@ function sortTableByValue(table){
   sortable.sort(function(a, b) {
       return b[1] - a[1];
   });
+  return sortable
+}
+
+function sortTableByAlphabet(table){
+
+  var sortable = [];
+  for (var key in table) {
+      sortable.push([key, table[key]]);
+  }
+
+  sortable.sort();
   return sortable
 }
