@@ -50,15 +50,7 @@ function processPOST(url, request, response) {
                         if (query == '') {
                             result = { savedBooks: savedBooks };
                         } else {
-                            result.savedBooks = [];
-                            var words = query.toLowerCase().split(' ');
-                            words.forEach(word => {
-                                savedBooks.forEach(book => {
-                                    if(book.toLowerCase().includes(word) && !result.savedBooks.includes(book)) {
-                                        result.savedBooks.push(book);
-                                    }
-                                });
-                            });
+                            result.savedBooks = booleanRetrieval(savedBooks, query);
                         }
                     } else {
                         result = { savedBooks: [] };
@@ -73,4 +65,19 @@ function processPOST(url, request, response) {
                 break;
         }
     });
+}
+
+function booleanRetrieval (docs, query) {
+    var result = [];
+    var terms = query.toLowerCase().split(' ');
+
+    terms.forEach(term => {
+        docs.forEach(doc => {
+            if(doc.toLowerCase().includes(term) && !result.includes(doc)) {
+                result.push(doc);
+            }
+        });
+    });
+
+    return result;
 }
