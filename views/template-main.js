@@ -38,7 +38,6 @@ exports.build = function(title, pagetitle, contentHeader, content) {
       '</div>',
     '</div>',
   '</div>',
-
 '</div>',
 ]
   .join('\n')

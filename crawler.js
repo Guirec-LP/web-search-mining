@@ -92,8 +92,6 @@ db.open(function(err, db) {
           callback();
         }
     });
-
-
   }
 
   /*

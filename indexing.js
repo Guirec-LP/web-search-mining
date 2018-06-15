@@ -11,7 +11,8 @@ var onErr = function(err, callback) {
   db.close();
   callback(err);
 };
-var collection
+var collectionPostings
+var collectionBooks
 
 // Connection once to the database
 
@@ -21,7 +22,6 @@ var collection
 var allPostings = [];
 var booksIndex  = [];
 
-retrievePostings()
 
 async.series([
     retrievePostings,
@@ -31,15 +31,19 @@ async.series([
     if (error) { alert('Something is wrong !');
   }else{
     console.log('YESSS')
+    console.log(allPostings)
   }
 });
+
+
+// retrievePostings(function(){console.log("ok")})
 
 function retrievePostings(callback){
 
   var result = []
   db.open(function(err, db) {
     if (!err) {
-      collectionPostings = db.collection('postings',function(err,collectionPostings){
+      collectionPostings = db.collection('postings',function(err,collection){
         if(err){
           onErr(err, callback(null));
         }
@@ -66,7 +70,33 @@ function retrievePostings(callback){
 }
 
 function getIndexBook(callback){
-  callback(null)
+
+  var allBooks ;
+  db.open(function(err, db) {
+    if (!err) {
+      collectionBooks = db.collection('books',function(err,collection){
+        if(err){
+          onErr(err, callback(null));
+        }
+      })
+      collectionBooks.find().toArray(function(err, data) {
+          if(!err){
+            console.log(err);
+
+            data.forEach(function(element){
+              allBooks.push(element)
+            });
+          // strJson = '{"GroupName":"' + gname + '","count":' + intCount + ',"teams":[' + strJson + "]}"
+          db.close()
+          callback(null);
+        } else {
+          onErr(err, callback(null));
+        }
+      });
+    }else{
+        onErr(err,callback(null))
+    }
+  })
 }
 
 function treatMultiplePostings(callback){
