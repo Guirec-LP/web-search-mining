@@ -99,7 +99,7 @@ function buildResultList(data) {
         data.books.forEach(function (book) {
             content += '<div class="alert alert-light alert-sm">' + book.title
                 + '&nbsp;&nbsp;'
-                + '<button onclick="location.href=\'' + book.url + '\';" class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">'
+                + '<button onclick="window.open(\'' + book.url + '\', \'_blank\');" class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">'
                 + 'More details'
                 + '</button>'
                 + '<div class="collapse alert alert-secondary" id="collapseExample">'
