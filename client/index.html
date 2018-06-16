@@ -22,20 +22,38 @@
                 <div class="card">
                     <div class="card-body card-primary">
                         <!-- <form method="get" action="/"> -->
-                        <div class="form-group row">
-                            <label class="col-sm-2 col-form-label" for="myText">Query</label>
-                            <input type="text" class="form-control col-sm-5" id="idSearchInput" placeholder="Please enter the terms of your research here"
-                            />
-                            <small id="help" class="form-text text-muted"></small>
-                            <div class="col-sm-1"></div>
-                            <button type="submit" class="btn btn-danger col-sm-2" onclick="onSearchClick()">Search</button>
+                        <div class="form-group">
+                            <div class="row" style="margin-top:10px">
+                                <label class="col-sm-2 col-form-label" for="myText">Full Search</label>
+                                <input type="text" class="form-control col-sm-5" id="idFullSearchInput" placeholder="Please enter the terms of your research here"
+                                />
+                                <!-- <small id="help" class="form-text text-muted"></small> -->
+                                <div class="col-sm-1"></div>
+                                <button type="submit" class="btn btn-danger col-sm-2" onclick="onFullSearchClick()">Search</button>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                    <label class="col-sm-2 col-form-label" for="myText">Search Title</label>
+                                <input type="text" class="form-control col-sm-5" id="idTitleSearchInput" placeholder="Please enter the terms of your research here"
+                                />
+                                <!-- <small id="help" class="form-text text-muted"></small> -->
+                                <div class="col-sm-1"></div>
+                                <button type="submit" class="btn btn-danger col-sm-2" onclick="onTitleSearchClick()">Search</button>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                    <label class="col-sm-2 col-form-label" for="myText">Search Author</label>
+                                <input type="text" class="form-control col-sm-5" id="idAuthorSearchInput" placeholder="Please enter the terms of your research here"
+                                />
+                                <!-- <small id="help" class="form-text text-muted"></small> -->
+                                <div class="col-sm-1"></div>
+                                <button type="submit" class="btn btn-danger col-sm-2" onclick="onAuthorSearchClick()">Search</button>
+                            </div>
                         </div>
                         <!-- </form> -->
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-body card-primary">
-                        <div class="card-title"> Results
+                        <div class="card-title" id="idResultHeader">
                         </div>
                         <div id="idContent"></div>
                     </div>

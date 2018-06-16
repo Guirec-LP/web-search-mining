@@ -1,5 +1,6 @@
 var http = require('http');
 var mongo_data = require('./model/mongo-data');
+var search_data = require('./model/search-data');
 
 http.createServer(function (request, response) {
     response.writeHead(200, {
@@ -39,27 +40,67 @@ function processPOST(url, request, response) {
         console.log("Payload: ", JSON.parse(jsonString));
         var requestParams = JSON.parse(jsonString);
 
-        switch (url) {
-            case '/query':
-                var result = {};
-                var query = requestParams.query;
+        var result = {};
+        var terms = requestParams.query.toLowerCase().trim().split(" ");
+        terms.forEach(term => {
+            if (term.trim() == "" || terms.includes(term, terms.indexOf(term) + 1)) {
+                terms.splice(terms.indexOf(term), 1);
+            }
+        });
 
-                mongo_data.postings(function (err, savedBooks) {
-                    console.log("savedBooks: ", savedBooks);
+        switch (url) {
+            case '/full':
+                search_data.getBooks(function (err, bookData) {
                     if (!err) {
-                        if (query == '') {
-                            result = { savedBooks: savedBooks };
+                        if (requestParams.query == '') {
+                            result = { books: bookData };
+                            response.write(JSON.stringify(result));
+                            request.pipe(response);
                         } else {
-                            result.savedBooks = booleanRetrieval(savedBooks, query);
+                            search_data.getBigPosting(function (err, postings) {
+                                if (!err) {
+                                    result.books = booleanRetrievalFull(postings, terms, bookData);
+                                    console.log("boolean retrieval resulted with " + result.books.length + " results: ", result.books);
+                                    response.write(JSON.stringify(result));
+                                    request.pipe(response);
+                                } else {
+                                    console.log("Something went wrong retrieving the postings. Returning empty array.");
+                                    result = { books: [] };
+                                    response.write(JSON.stringify(result));
+                                    request.pipe(response);
+                                }
+                            });
                         }
                     } else {
-                        result = { savedBooks: [] };
+                        console.log("Something went wrong retrieving the books. Returning empty array.");
+                        result = { books: [] };
+                        response.write(JSON.stringify(result));
+                        request.pipe(response);
                     }
-                    response.write(JSON.stringify(result));
-                    request.pipe(response);
-
-                    console.log("Sent response");
                 });
+                break;
+            case '/title':
+                search_data.getBooks(function (err, bookData) {
+                    if (!err) {
+                        if (requestParams.query == '') {
+                            result = { books: bookData };
+                            response.write(JSON.stringify(result));
+                            request.pipe(response);
+                        } else {
+                            result.books = booleanRetrievalTitle(bookData, terms);
+                            console.log("boolean retrieval resulted with " + result.books.length + " results: ", result.books);
+                            response.write(JSON.stringify(result));
+                            request.pipe(response);
+                        }
+                    } else {
+                        console.log("Something went wrong retrieving the books. Returning empty array.");
+                        result = { books: [] };
+                        response.write(JSON.stringify(result));
+                        request.pipe(response);
+                    }
+                });
+                break;
+            case '/author':
                 break;
             default:
                 break;
@@ -67,17 +108,84 @@ function processPOST(url, request, response) {
     });
 }
 
-function booleanRetrieval (docs, query) {
-    var result = [];
-    var terms = query.toLowerCase().split(' ');
+function booleanRetrievalFull(postings, terms, books) {
+    var results = [];
 
     terms.forEach(term => {
-        docs.forEach(doc => {
-            if(doc.toLowerCase().includes(term) && !result.includes(doc)) {
-                result.push(doc);
+        postings.forEach(posting => {
+            if (posting.word.toLowerCase().includes(term)) {
+                posting.postings.forEach(post => {
+                    books.forEach(book => {
+                        if ((book.id.toString() == post.bookId.toString() || book.title.toLowerCase().includes(term)) && !results.includes(book)) {
+                            results.push(book);
+                        }
+                    });
+                });
             }
         });
     });
 
-    return result;
+    return results;
+}
+
+function booleanRetrievalTitle(books, terms) {
+    var results = [];
+
+    terms.forEach(term => {
+        books.forEach(book => {
+            if (book.title.toLowerCase().includes(term) && !results.includes(book)) {
+                results.push(book);
+            }
+        });
+    });
+
+    return results;
+}
+
+function booleanRetrievalAuthor(postings, terms, books) {
+    var results = [];
+
+    terms.forEach(term => {
+        postings.forEach(posting => {
+            if (posting.word.toLowerCase().includes(term)) {
+                posting.postings.forEach(post => {
+                    books.forEach(book => {
+                        if (book.id.toString() == post.bookId.toString()) {
+                            if (!results.includes(book)) {
+                                results.push(book);
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    });
+
+    return results;
+}
+
+function rankByTermFreq(docs, terms) {
+    var result = docs;
+    results.forEach(result => {
+        result.score = 0;
+    });
+    // var postings = search_data.getBigPosting();
+
+    // var posting;
+    // terms.forEach(term => {
+    //     postings.forEach(posting => {
+    //         if (posting.word.toLowerCase().includes(term)) {
+    //             docFrequencies.forEach(docFreq => {
+    //                 results.forEach(result => {
+    //                     if (docFreq.id == result.id) {
+    //                         result.score += docFreq.frequency;
+    //                     }
+    //                 });
+    //             });
+    //         }
+    //     });
+    // });
+
+    results.sort((a, b) => { return a.score >= b.score ? 1 : -1 });
+    return results;
 }
