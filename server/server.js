@@ -59,7 +59,7 @@ function processPOST(url, request, response) {
                         } else {
                             search_data.getBigPosting(function (err, postings) {
                                 if (!err) {
-                                    result.books = booleanRetrievalFull(postings, terms, bookData);
+                                    result.books = rankByTermFreq(booleanRetrievalFull(postings, terms, bookData), terms, postings);
                                     console.log("boolean retrieval resulted with " + result.books.length + " results: ", result.books);
                                     response.write(JSON.stringify(result));
                                     request.pipe(response);
@@ -87,7 +87,7 @@ function processPOST(url, request, response) {
                             response.write(JSON.stringify(result));
                             request.pipe(response);
                         } else {
-                            result.books = booleanRetrievalTitle(bookData, terms);
+                            result.books = rankByTermFreq(booleanRetrievalTitle(bookData, terms), terms);
                             console.log("boolean retrieval resulted with " + result.books.length + " results: ", result.books);
                             response.write(JSON.stringify(result));
                             request.pipe(response);
@@ -145,46 +145,54 @@ function booleanRetrievalTitle(books, terms) {
 function booleanRetrievalAuthor(postings, terms, books) {
     var results = [];
 
-    terms.forEach(term => {
-        postings.forEach(posting => {
-            if (posting.word.toLowerCase().includes(term)) {
-                posting.postings.forEach(post => {
-                    books.forEach(book => {
-                        if (book.id.toString() == post.bookId.toString()) {
-                            if (!results.includes(book)) {
-                                results.push(book);
-                            }
-                        }
-                    });
-                });
-            }
-        });
-    });
-
-    return results;
-}
-
-function rankByTermFreq(docs, terms) {
-    var result = docs;
-    results.forEach(result => {
-        result.score = 0;
-    });
-    // var postings = search_data.getBigPosting();
-
-    // var posting;
     // terms.forEach(term => {
     //     postings.forEach(posting => {
     //         if (posting.word.toLowerCase().includes(term)) {
-    //             docFrequencies.forEach(docFreq => {
-    //                 results.forEach(result => {
-    //                     if (docFreq.id == result.id) {
-    //                         result.score += docFreq.frequency;
+    //             posting.postings.forEach(post => {
+    //                 books.forEach(book => {
+    //                     if (book.id.toString() == post.bookId.toString()) {
+    //                         if (!results.includes(book)) {
+    //                             results.push(book);
+    //                         }
     //                     }
     //                 });
     //             });
     //         }
     //     });
     // });
+
+    return results;
+}
+
+function rankByTermFreq(books, terms, postings) {
+    var results = books;
+    results.forEach(result => {
+        result.score = 0;
+        if (!postings) {
+            terms.forEach(term => {
+                result.score += (result.title.match(new RegExp(term, "g")) || []).length;
+            });
+        }
+    });
+
+    if (!postings) {
+        results.sort((a, b) => { return a.score >= b.score ? 1 : -1 });
+        return results;
+    }
+
+    terms.forEach(term => {
+        postings.forEach(posting => {
+            if (posting.word.toLowerCase().includes(term)) {
+                posting.postings.forEach(post => {
+                    results.forEach(result => {
+                        if (post.bookId == result.id) {
+                            result.score += post.freq;
+                        }
+                    });
+                });
+            }
+        });
+    });
 
     results.sort((a, b) => { return a.score >= b.score ? 1 : -1 });
     return results;

@@ -71,27 +71,27 @@ function onTitleSearchClick() {
     xhr.send(payload);
 }
 
-function onAuthorSearchClick() {
-    var query = document.getElementById("idAuthorSearchInput").value;
+// function onAuthorSearchClick() {
+//     var query = document.getElementById("idAuthorSearchInput").value;
 
-    var xhr = new XMLHttpRequest();
-    xhr.withCredentials = false;
+//     var xhr = new XMLHttpRequest();
+//     xhr.withCredentials = false;
 
-    xhr.addEventListener("readystatechange", function () {
-        console.log(this.responseText);
-        if (this.readyState === 4) {
-            var responseJson = JSON.parse(this.responseText);
-            console.log("XHR Response: ", responseJson);
-            document.getElementById("idResultHeader").innerHTML = "Author Search Results (" + responseJson.books.length + " hits)";
-            buildResultList(responseJson);
-        }
-    });
+//     xhr.addEventListener("readystatechange", function () {
+//         console.log(this.responseText);
+//         if (this.readyState === 4) {
+//             var responseJson = JSON.parse(this.responseText);
+//             console.log("XHR Response: ", responseJson);
+//             document.getElementById("idResultHeader").innerHTML = "Author Search Results (" + responseJson.books.length + " hits)";
+//             buildResultList(responseJson);
+//         }
+//     });
 
-    var payload = JSON.stringify({ query: query });
-    xhr.open("POST", baseUrl + endpointAuthorSearch);
-    xhr.setRequestHeader('Content-Type', 'text/plain');
-    xhr.send(payload);
-}
+//     var payload = JSON.stringify({ query: query });
+//     xhr.open("POST", baseUrl + endpointAuthorSearch);
+//     xhr.setRequestHeader('Content-Type', 'text/plain');
+//     xhr.send(payload);
+// }
 
 function buildResultList(data) {
     var content = ""
@@ -99,11 +99,9 @@ function buildResultList(data) {
         data.books.forEach(function (book) {
             content += '<div class="alert alert-light alert-sm">' + book.title
                 + '&nbsp;&nbsp;'
-                + '<button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">'
-
+                + '<button onclick="location.href=\'' + book.url + '\';" class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">'
                 + 'More details'
                 + '</button>'
-
                 + '<div class="collapse alert alert-secondary" id="collapseExample">'
                 + '<div class="card card-body">'
                 + 'Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson'
