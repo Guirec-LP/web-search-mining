@@ -146,7 +146,7 @@ function booleanRetrievalTitle(books, terms) {
 
     terms.forEach(term => {
         books.forEach(book => {
-            if (book.title.toLowerCase().includes(term) && !results.includes(book)) {
+            if (book.title.toLowerCase().includes(term) && !isBookInResults(book, results)) {
                 results.push(book);
             }
         });
