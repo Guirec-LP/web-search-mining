@@ -116,7 +116,7 @@ function booleanRetrievalFull(postings, terms, books) {
             if (posting.word.toLowerCase().includes(term)) {
                 posting.postings.forEach(post => {
                     books.forEach(book => {
-                        if ((book.id.toString() == post.bookId.toString() || book.title.toLowerCase().includes(term)) && !results.includes(book)) {
+                        if ((book.id.toString() == post.bookId.toString() || book.title.toLowerCase().includes(term)) && !isBookInResults(book, results)) {
                             results.push(book);
                         }
                     });
@@ -126,6 +126,18 @@ function booleanRetrievalFull(postings, terms, books) {
     });
 
     return results;
+}
+
+function isBookInResults(book, results) {
+    var ret = false;
+
+    results.forEach(result => {
+        if (result.title == book.title || result.id == book.id) {
+            ret = true;
+        }
+    });
+
+    return ret;
 }
 
 function booleanRetrievalTitle(books, terms) {
