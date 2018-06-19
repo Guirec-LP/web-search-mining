@@ -51,10 +51,14 @@ function processPOST(url, request, response) {
         switch (url) {
             case '/full':
                 search_data.getBooks(function (err, bookData) {
-                    console.log(bookData);
                     if (!err) {
                         if (requestParams.query == '') {
-                            result = { books: bookData };
+                            result = { books: [] };
+                            bookData.forEach(book => {
+                                if (!isBookInResults(book, result.books)) {
+                                    result.books.push(book);
+                                }
+                            });
                             response.write(JSON.stringify(result));
                             request.pipe(response);
                         } else {
@@ -84,7 +88,12 @@ function processPOST(url, request, response) {
                 search_data.getBooks(function (err, bookData) {
                     if (!err) {
                         if (requestParams.query == '') {
-                            result = { books: bookData };
+                            result = { books: [] };
+                            bookData.forEach(book => {
+                                if (!isBookInResults(book, result.books)) {
+                                    result.books.push(book);
+                                }
+                            });
                             response.write(JSON.stringify(result));
                             request.pipe(response);
                         } else {
