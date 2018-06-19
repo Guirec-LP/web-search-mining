@@ -1,4 +1,4 @@
-var baseUrl = "http://localhost:8080";
+var baseUrl = "http://localhost:8082";
 var endpointFullSearch = "/full";
 var endpointTitleSearch = "/title";
 var endpointAuthorSearch = "/author";

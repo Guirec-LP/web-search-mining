@@ -24,7 +24,7 @@ http.createServer(function (request, response) {
         response.statusCode = 404;
         response.end();
     }
-}).listen(8080);
+}).listen(8082);
 console.log("Server is running...");
 
 function processPOST(url, request, response) {
@@ -51,6 +51,7 @@ function processPOST(url, request, response) {
         switch (url) {
             case '/full':
                 search_data.getBooks(function (err, bookData) {
+                    console.log(bookData);
                     if (!err) {
                         if (requestParams.query == '') {
                             result = { books: bookData };
